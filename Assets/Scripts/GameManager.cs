@@ -35,11 +35,11 @@ public class GameManager : MonoBehaviour
 
     [Header("Dynamic Time Bonus (gantiin flat +10 detik)")]
     public float secondsPerCoin = 2.5f;      // waktu tambahan PER KOIN di stage baru itu
-    public float bombPenaltyBuffer = 3f;     // ekstra detik kalau stage ini udah ada bomb coin
+    public float bombPenaltyBuffer = 2f;     // ekstra detik kalau stage ini udah ada bomb coin
     public float shufflePenaltyBuffer = 2f;  // ekstra detik kalau stage ini zona lagi diacak
 
     [Header("Scoring")]
-    public int pointsPerCorrectPlacement = 10; // nambah tiap kali koin ditaruh BENAR
+    public int pointsPerCorrectPlacement = 1; // nambah tiap kali koin ditaruh BENAR
 
     [Header("Zone Shuffle")]
     public List<DropZone> zones; // drag IndoPlace, ChinaPlace, USPlace, EuropePlace ke sini
@@ -173,7 +173,7 @@ public class GameManager : MonoBehaviour
             bonus += shufflePenaltyBuffer;
         }
 
-        return bonus;
+        return bonus/1.5f;
     }
 
     void ShuffleZonePositions()
@@ -535,6 +535,8 @@ public class GameManager : MonoBehaviour
     {
         isGameOver = true;
 
+        ProceedAfterSuccess();
+
         if (GameOverUI.Instance != null)
         {
             GameOverUI.Instance.ShowGameOver(currentStage, score);
@@ -543,5 +545,13 @@ public class GameManager : MonoBehaviour
         {
             Debug.LogWarning("GameOverUI belum ke-setup di scene! Stage: " + currentStage + " Score: " + score);
         }
+    }
+    
+    private void ProceedAfterSuccess()
+    {
+        string playedAt = System.DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss");
+        string playerName = LeaderboardManager.CurrentPlayerName;
+        LeaderboardManager.TrySaveScore(playerName, score, playedAt);
+        Debug.Log("Leaderboard disimpan: " + playerName + " - Score " + score);
     }
 }

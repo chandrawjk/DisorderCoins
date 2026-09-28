@@ -3,9 +3,8 @@ using UnityEngine.UI;
 using TMPro;
 using System.Collections;
 using UnityEngine.SceneManagement;
+using UnityEngine.SocialPlatforms.Impl;
 
-// Tempel script ini di GameObject kosong (misal "GameOverUI"), lalu drag Panel-nya
-// (yang punya CanvasGroup) ke field "Panel Canvas Group" di bawah.
 public class GameOverUI : MonoBehaviour
 {
     public static GameOverUI Instance;
@@ -55,11 +54,6 @@ public class GameOverUI : MonoBehaviour
         if (stageText != null) stageText.text = "Stage: " + stage;
         if (scoreText != null) scoreText.text = "Score: " + score;
         if (highScoreText != null) highScoreText.text = "High Score: " + highScore;
-
-        // PENTING: capture dulu SEBELUM panel diaktifin, biar screenshot-nya
-        // cuma nangkep gameplay di belakang, bukan panel yang mau ditampilin.
-        // blurBackgroundImage sekarang OBJEK TERPISAH (bukan child GameOverPanel),
-        // jadi harus diaktifin manual di sini.
         if (blurBackgroundImage != null && captureCamera != null && blurMaterial != null)
         {
             Texture2D blurredTexture = CaptureAndBlur();
