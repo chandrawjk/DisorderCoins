@@ -7181,7 +7181,7 @@ MonoBehaviour:
   bombDefuseSound: {fileID: 0}
   baseTotalCoins: 4
   coinsIncrementPerStage: 1
-  baseTimeLimit: 15
+  baseTimeLimit: 20
   totalSpawnDuration: 1
   secondsPerCoin: 1
   bombPenaltyBuffer: 0

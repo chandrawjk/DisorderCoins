@@ -1,6 +1,10 @@
+using System;
+using System.Collections.Generic;
 using System.Text;
+using TMPro;
 using UnityEngine;
-using UnityEngine.SceneManagement; // Wajib dipanggil untuk pindah scene
+using UnityEngine.SceneManagement;
+using UnityEngine.UI; // Wajib dipanggil untuk pindah scene
 
 public class MainMenu : MonoBehaviour
 {
@@ -12,12 +16,31 @@ public class MainMenu : MonoBehaviour
     private TMPro.TMP_Text existingNameInfoText;
     public GameObject leaderboardPanel;
     public TMPro.TMP_Text leaderboardListText;
-    public TMPro.TMP_Text leaderboardListText2;
+    
+    [SerializeField] private TextMeshProUGUI savedScoreText;
+    [SerializeField] private TextMeshProUGUI pageText;
+    [SerializeField] private Button previousButton;
+    [SerializeField] private Button nextButton;
+    private List<SavedScore> sortedScores = new List<SavedScore>();
+    
+    private int currentPage;
+    private const int EntriesPerPage = 15;
     void Awake()
     {
         scorePanel.SetActive(false);
         namePanel.SetActive(false);
+        if (previousButton != null)
+            previousButton.onClick.AddListener(PreviousPage);
+        if (nextButton != null)
+            nextButton.onClick.AddListener(NextPage);
         TutorialManager.ResetTutorialFlag();
+    }
+    [Serializable]
+    private class SavedScore
+    {
+        public string playerName = "";
+        public int score = 0;
+        public string playedAt = "";
     }
 
     public void PlayGame()
@@ -114,35 +137,89 @@ public class MainMenu : MonoBehaviour
         Application.Quit();
         Debug.Log("Game Quit"); // Untuk mengecek di Editor Unity bahwa fungsi dipanggil
     }
+        public void NextPage()
+    {
+        int pageCount = GetPageCount();
+        if (currentPage < pageCount - 1)
+        {
+            currentPage++;
+            RenderCurrentPage();
+        }
+    }
+
+    public void PreviousPage()
+    {
+        if (currentPage > 0)
+        {
+            currentPage--;
+            RenderCurrentPage();
+        }
+    }
+        private int GetPageCount()
+    {
+        return (sortedScores.Count + EntriesPerPage - 1) / EntriesPerPage;
+    }
+
+    private void RenderCurrentPage()
+    {
+        if (leaderboardListText == null)
+        {
+            return;
+        }
+
+        StringBuilder result = new StringBuilder();
+        result.AppendLine("No. Tanggal\t\t\t|\t\tSkor\t\t|\tNama\n");
+
+        if (sortedScores.Count == 0)
+        {
+            result.Append("Belum ada skor");
+        }
+        else
+        {
+            int firstIndex = currentPage * EntriesPerPage;
+            int lastIndex = Mathf.Min(firstIndex + EntriesPerPage, sortedScores.Count);
+            for (int index = firstIndex; index < lastIndex; index++)
+            {
+                SavedScore savedScore = sortedScores[index];
+                result.Append(index + 1)
+                    .Append(". ")
+                    .Append(savedScore.playedAt)
+                    .Append("\t|\t\t")
+                    .Append(savedScore.score)
+                    .Append("\t\t|\t")
+                    .Append(savedScore.playerName)
+                    .AppendLine();
+            }
+        }
+
+        leaderboardListText.text = result.ToString();
+
+        if (pageText != null)
+            pageText.text = sortedScores.Count == 0 ? "0/0" : (currentPage + 1) + "/" + GetPageCount();
+        if (previousButton != null)
+            previousButton.interactable = currentPage > 0;
+        if (nextButton != null)
+            nextButton.interactable = currentPage < GetPageCount() - 1;
+    }
     public void OnLeaderboardClicked()
     {
-        if (leaderboardListText != null)
+        List<LeaderboardEntry> entries = LeaderboardManager.GetTopEntries(LeaderboardManager.GetAllEntries().Count);
+        sortedScores.Clear();
+        foreach (LeaderboardEntry entry in entries)
         {
-            var top = LeaderboardManager.GetTopEntries(10);
-            StringBuilder sb = new StringBuilder();
-            StringBuilder sc = new StringBuilder();
-
-            if (top.Count == 0)
+            if (entry != null)
             {
-                sb.AppendLine("Belum ada data. Ayo main duluan!");
-            }
-            else
-            {
-                for (int i = 0; i < top.Count; i++)
+                sortedScores.Add(new SavedScore
                 {
-                    string playedAt = string.IsNullOrEmpty(top[i].lastPlayedAt) ? "-" : top[i].lastPlayedAt;
-                    sb.AppendLine($"{i + 1}. {top[i].playerName}");
-                }
-                for (int j = 0; j < top.Count; j++)
-                {
-                    string playedAt = string.IsNullOrEmpty(top[j].lastPlayedAt) ? "-" : top[j].lastPlayedAt;
-                    sc.AppendLine($"{top[j].score}     {playedAt}");
-                }
+                    playerName = entry.playerName ?? "",
+                    score = entry.score,
+                    playedAt = string.IsNullOrEmpty(entry.lastPlayedAt) ? "-" : entry.lastPlayedAt
+                });
             }
-
-            leaderboardListText.text = sb.ToString();
-            leaderboardListText2.text = sc.ToString();
         }
+
+        currentPage = 0;
+        RenderCurrentPage();
         if (leaderboardPanel != null) leaderboardPanel.SetActive(true);
     }
 }
